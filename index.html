@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>英文體檢站 · English Check-up</title>
+<style>
+  :root {
+    --bg: #FBFBFA;
+    --surface: #FFFFFF;
+    --surface-2: #F7F6F3;
+    --text: #1A1A1A;
+    --text-muted: #787774;
+    --border: #EAEAEA;
+    --border-strong: #D4D3D0;
+    --pale-red-bg: #FDEBEC; --pale-red-text: #9F2F2D;
+    --pale-blue-bg: #E1F3FE; --pale-blue-text: #1F6C9F;
+    --pale-green-bg: #EDF3EC; --pale-green-text: #346538;
+    --pale-yellow-bg: #FBF3DB; --pale-yellow-text: #956400;
+    --accent: #1A1A1A;
+    --shadow-soft: 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-hover: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Noto Sans HK', 'PingFang HK', -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.6; font-size: 15px;
+    padding-bottom: 84px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: 'Noto Serif HK', 'Songti TC', serif; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+  .container { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+  header {
+    padding: 40px 16px 22px;
+    padding-top: max(40px, env(safe-area-inset-top));
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 500; margin-bottom: 8px;
+  }
+  h1.site-title {
+    font-family: 'Noto Serif HK', 'Songti TC', serif;
+    font-size: 30px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15;
+  }
+  .site-sub { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+  .header-progress { margin-top: 14px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-label {
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 500; margin-bottom: 8px;
+  }
+  .card-value { font-family: 'Noto Serif HK', serif; font-size: 30px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; }
+  .card-unit { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  .tag {
+    display: inline-block; font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase;
+    font-weight: 500; padding: 3px 8px; border-radius: 9999px; line-height: 1.4; flex-shrink: 0;
+  }
+  .tag-green { background: var(--pale-green-bg); color: var(--pale-green-text); }
+  .tag-blue { background: var(--pale-blue-bg); color: var(--pale-blue-text); }
+  .tag-yellow { background: var(--pale-yellow-bg); color: var(--pale-yellow-text); }
+  .tag-red { background: var(--pale-red-bg); color: var(--pale-red-text); }
+  .tag-gray { background: var(--surface-2); color: var(--text-muted); }
+
+  .progress-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.6s cubic-bezier(0.16,1,0.3,1); }
+
+  /* test list rows: vertical, one fact per line */
+  .test-row {
+    display: block; width: 100%; text-align: left;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    cursor: pointer; font-family: inherit; font-size: inherit; color: inherit;
+  }
+  .test-row:active { transform: scale(0.99); }
+  .test-row .row-top { display: flex; align-items: center; gap: 8px; }
+  .test-row .row-name { font-size: 15px; font-weight: 600; flex: 1; }
+  .test-row .row-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .test-row .row-score { font-size: 12px; margin-top: 6px; font-weight: 500; }
+
+  .section-h {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted); font-weight: 600;
+    margin: 22px 0 10px; padding-left: 2px;
+  }
+
+  .info-block { font-size: 13px; line-height: 1.75; }
+  .info-block p { margin-bottom: 8px; }
+  .info-block p:last-child { margin-bottom: 0; }
+
+  ul.clean { list-style: none; }
+  ul.clean li { padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.6; }
+  ul.clean li:last-child { border-bottom: none; }
+  .li-strong { font-weight: 600; font-size: 14px; }
+  .li-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* bottom nav */
+  nav.tabs {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 40;
+  }
+  nav.tabs button {
+    flex: 1; background: none; border: none; padding: 10px 0 8px;
+    font-family: inherit; font-size: 11px; color: var(--text-muted);
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  nav.tabs button .t-emoji { font-size: 19px; line-height: 1; }
+  nav.tabs button.active { color: var(--text); font-weight: 600; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* fullscreen test runner */
+  #runner {
+    position: fixed; inset: 0; background: var(--bg); z-index: 60;
+    overflow-y: auto; display: none; padding-bottom: 120px;
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+  #runner.open { display: block; }
+  .runner-head {
+    position: sticky; top: 0; background: rgba(251,251,250,0.95); backdrop-filter: blur(8px);
+    padding: 12px 16px; border-bottom: 1px solid var(--border); z-index: 5;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .runner-head .r-title { font-size: 14px; font-weight: 600; flex: 1; }
+  .runner-head .r-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); }
+  .btn-x {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    width: 30px; height: 30px; font-size: 14px; cursor: pointer; color: var(--text-muted);
+    flex-shrink: 0; line-height: 1;
+  }
+  .q-card { padding: 18px 16px 8px; }
+  .q-word { font-family: 'Noto Serif HK', serif; font-size: 30px; font-weight: 700; text-align: center; margin: 22px 0 6px; letter-spacing: -0.02em; }
+  .q-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+  .q-sentence { font-size: 15px; line-height: 1.7; margin-bottom: 14px; }
+  .opt-btn {
+    display: block; width: 100%; text-align: left;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px 14px; margin-bottom: 8px;
+    font-family: inherit; font-size: 15px; color: var(--text); cursor: pointer;
+  }
+  .opt-btn:active { background: var(--surface-2); }
+  .runner-actions { padding: 10px 16px 24px; }
+  .btn-primary {
+    display: block; width: 100%; background: var(--accent); color: #fff;
+    border: none; border-radius: 10px; padding: 13px; font-family: inherit;
+    font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 10px;
+  }
+  .btn-secondary {
+    display: block; width: 100%; background: var(--surface); color: var(--text);
+    border: 1px solid var(--border-strong); border-radius: 10px; padding: 12px;
+    font-family: inherit; font-size: 14px; cursor: pointer; margin-bottom: 10px;
+  }
+  .btn-play {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; background: var(--pale-blue-bg); color: var(--pale-blue-text);
+    border: 1px solid #c4e4f8; border-radius: 10px; padding: 14px;
+    font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 10px;
+  }
+  .btn-play:disabled { opacity: 0.4; cursor: not-allowed; }
+  .passage-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 16px; font-size: 14px; line-height: 1.9; margin: 14px 0;
+  }
+  .passage-box h4 { font-size: 14px; margin-bottom: 10px; }
+  .passage-box p { margin-bottom: 9px; }
+  .timer-big {
+    font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 700;
+    text-align: center; letter-spacing: 0.02em; margin: 12px 0;
+  }
+  .note-box {
+    background: var(--surface-2); border-radius: 10px; padding: 12px 14px;
+    font-size: 12.5px; color: var(--text-muted); line-height: 1.7; margin: 10px 0;
+  }
+  textarea.ztextarea {
+    width: 100%; min-height: 180px; border: 1px solid var(--border-strong);
+    border-radius: 10px; padding: 12px; font-family: inherit; font-size: 15px;
+    line-height: 1.7; resize: vertical; background: var(--surface); color: var(--text);
+  }
+  textarea.ztextarea:focus { outline: 2px solid var(--pale-blue-bg); }
+  .check-line { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .check-line:last-child { border-bottom: none; }
+  .check-line input[type=checkbox] { width: 18px; height: 18px; margin-top: 3px; flex-shrink: 0; }
+  select.zselect {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--border-strong); border-radius: 10px;
+    font-family: inherit; font-size: 14px; background: var(--surface); color: var(--text);
+  }
+  .score-hero { text-align: center; padding: 30px 16px 10px; }
+  .score-hero .big { font-family: 'Noto Serif HK', serif; font-size: 46px; font-weight: 700; letter-spacing: -0.03em; }
+  .score-hero .label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  .skill-row { padding: 13px 0; border-bottom: 1px solid var(--border); }
+  .skill-row:last-child { border-bottom: none; }
+  .skill-row .s-top { display: flex; align-items: center; gap: 8px; }
+  .skill-row .s-name { font-size: 14px; font-weight: 600; flex: 1; }
+  .skill-row .s-metric { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  footer.site-foot {
+    text-align: center; font-size: 11px; color: var(--text-muted);
+    padding: 30px 16px 20px; line-height: 1.8;
+  }
+  a.plain { color: var(--pale-blue-text); text-decoration: none; font-weight: 500; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="eyebrow">🩺 English Check-up · 英文體檢站</div>
+    <h1 class="site-title">先量化<br>後訓練</h1>
+    <div class="site-sub">摸底 6 部分＋英打協同——英文版 InBody</div>
+    <div class="header-progress">
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted);">
+        <span>摸底進度</span><span class="mono" id="hdr-progress-num">0 / 6</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="hdr-progress-fill" style="width:0%"></div></div>
+    </div>
+  </header>
+</div>
+
+<div class="container">
+
+  <!-- ============ TAB 1: TESTS ============ -->
+  <section class="view active" id="view-tests">
+    <div class="note-box">⚠️ 測試規矩：一次過完成，唔查字典、唔用手機翻譯、唔問 AI——擬真先測到真實水平。測試結果只存你部機（localStorage），唔會上傳。</div>
+
+    <div class="section-h">🧪 六部分摸底</div>
+    <div id="test-list"></div>
+
+    <div class="section-h">⌨️ 英打（已有數據 · 唔使重測）</div>
+    <div class="card">
+      <div class="card-label">Typing Baseline</div>
+      <div class="card-value">21.4 <span style="font-size:14px; font-weight:400; color:var(--text-muted);">net wpm</span></div>
+      <div class="card-unit">ACO 線 30 ｜ PSII 線 40</div>
+      <div class="divider"></div>
+      <div class="info-block" style="font-size:12.5px;">
+        <p>詞彙熟 → chunk 大 → 腦緩衝區大 → 連打唔斷</p>
+        <p>英文係打字嘅加成劑，唔係替代品——<a class="plain" href="https://zoematszting-bit.github.io/typing-trainer/" target="_blank">每日打字練習照去 →</a></p>
+      </div>
+    </div>
+
+    <div class="section-h">🍽️ 點食落去</div>
+    <div class="card">
+      <ul class="clean">
+        <li><div class="li-strong">第 1 餐（45 分鐘）</div><div class="li-sub">Part 1 詞彙 ＋ Part 2 語法——純手機</div></li>
+        <li><div class="li-strong">第 2 餐（45 分鐘）</div><div class="li-sub">Part 3 閱讀 ＋ Part 4 聽力——戴耳機</div></li>
+        <li><div class="li-strong">第 3 餐（35 分鐘）</div><div class="li-sub">Part 5 口語錄音 ＋ Part 6 寫作</div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ TAB 2: REPORT ============ -->
+  <section class="view" id="view-report">
+    <div class="section-h">📊 六科成績</div>
+    <div class="card" id="report-skills"><div class="info-block" style="color:var(--text-muted)">未有任何測試成績——去「摸底」度開始第一部分。</div></div>
+
+    <div class="section-h">🎯 綜合判讀</div>
+    <div class="card" id="report-summary"><div class="info-block" style="color:var(--text-muted)">等六部分完成（或至少完成 4 部分）先有綜合判讀。</div></div>
+
+    <div class="section-h">📤 回報 ZCode</div>
+    <div class="card">
+      <div class="info-block" style="font-size:12.5px; margin-bottom:10px;">撳下面複製成績摘要，貼俾 ZCode 做官方批改＋記錄入檔（口語稿／寫作稿都一齊貼）。</div>
+      <button class="btn-secondary" id="btn-copy-summary">📋 複製成績摘要</button>
+      <button class="btn-secondary" id="btn-reset" style="color:var(--pale-red-text);">🗑️ 重設全部成績（重新摸底用）</button>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3: PLAN ============ -->
+  <section class="view" id="view-plan">
+    <div class="section-h">🗺️ 四階段路線圖</div>
+
+    <div class="card">
+      <div class="card-label">Phase 0 · 而家</div>
+      <div class="card-value" style="font-size:22px;">🩺 摸底期</div>
+      <div class="card-unit">兩週內搞掂 · 一次性有界任務</div>
+      <div class="divider"></div>
+      <ul class="clean">
+        <li><div class="li-strong">完成六部分測試</div><div class="li-sub">分 3 餐食，唔好一晚爆晒</div></li>
+        <li><div class="li-strong">成績摘要貼俾 ZCode</div><div class="li-sub">口語稿＋寫作稿 ZCode 客觀批改</div></li>
+        <li><div class="li-strong">出英文體檢報告</div><div class="li-sub">弱點清單＋面試準備度</div></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Phase 1 · 11-12 月</div>
+      <div class="card-value" style="font-size:22px;">🧱 地基期</div>
+      <div class="card-unit">每日 10 分鐘 · 輸入為主</div>
+      <div class="divider"></div>
+      <ul class="clean">
+        <li><div class="li-strong">詞彙餵打字個腦位</div><div class="li-sub">詞彙熟＝chunk 大＝連打唔斷</div></li>
+        <li><div class="li-strong">英文閱讀輕量日糧</div><div class="li-sub">內容等體檢報告出咗先定</div></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Phase 2 · 1 月</div>
+      <div class="card-value" style="font-size:22px;">⌨️ 打字衝刺期</div>
+      <div class="card-unit">英打係主線 · 唔讓路</div>
+      <div class="divider"></div>
+      <ul class="clean">
+        <li><div class="li-strong">12 週打字計劃照跑</div><div class="li-sub">12/30 重報 ACO——唯一有 deadline 嘅線</div></li>
+        <li><div class="li-strong">英文只保溫</div><div class="li-sub">每日 5 分鐘唔斷就得</div></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Phase 3 · 2 月起</div>
+      <div class="card-value" style="font-size:22px;">🎤 面試衝刺期</div>
+      <div class="card-unit">視面試排期啟動</div>
+      <div class="divider"></div>
+      <ul class="clean">
+        <li><div class="li-strong">口語逐題練</div><div class="li-sub">自我介紹＋高頻面試題，錄音→轉文字→批改</div></li>
+        <li><div class="li-strong">聽力同步保溫</div><div class="li-sub">面試官講嘢聽得明係底線</div></li>
+      </ul>
+    </div>
+
+    <div class="section-h">🧠 協同邏輯</div>
+    <div class="card">
+      <div class="info-block">
+        <p><strong>英文 ↔ 打字係同一條神經線：</strong></p>
+        <p>打字瓶頸＝「眼→腦→手」流水線斷線（唔係手指慢）。詞彙量直接擴大「腦緩衝區」——同一個訓練目標，兩邊收數。</p>
+        <p><strong>但誠實講：</strong>手指自動化＋考場紙本模式，必須靠打字站每日練——英文係加成劑，唔係替代品。</p>
+      </div>
+    </div>
+
+    <div class="section-h">⚠️ 導師三條規矩</div>
+    <div class="card">
+      <ul class="clean">
+        <li><div class="li-strong">① 英打仍係主線</div><div class="li-sub">唯一有 deadline（12/30 重報）——摸底唔搶每日 35 分鐘</div></li>
+        <li><div class="li-strong">② 摸底係有界任務</div><div class="li-sub">兩週內完成，唔變成無限工程</div></li>
+        <li><div class="li-strong">③ 擴建等報告</div><div class="li-sub">體檢報告出咗先設計訓練內容——唔好未驗先起系統</div></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="site-foot">
+    🩺 英文體檢站 v1.0 · 2026-10-15<br>
+    ZCode × Zoe · 先量化，後訓練
+  </footer>
+</div>
+
+<!-- ============ TEST RUNNER OVERLAY ============ -->
+<div id="runner">
+  <div class="runner-head">
+    <button class="btn-x" id="runner-close">✕</button>
+    <div class="r-title" id="runner-title">測試</div>
+    <div class="r-count" id="runner-count"></div>
+  </div>
+  <div class="container" id="runner-body"></div>
+  <div class="container runner-actions" id="runner-actions"></div>
+</div>
+
+<!-- bottom nav -->
+<nav class="tabs">
+  <button class="active" data-tab="tests"><span class="t-emoji">🧪</span>摸底</button>
+  <button data-tab="report"><span class="t-emoji">📊</span>報告</button>
+  <button data-tab="plan"><span class="t-emoji">🗓️</span>計劃</button>
+</nav>
+
+<script>
+/* ================= STATE ================= */
+const LS_KEY = 'englishHubV1';
+let S = load();
+function load(){ try { return JSON.parse(localStorage.getItem(LS_KEY)) || fresh(); } catch(e){ return fresh(); } }
+function fresh(){ return { results: {} }; }
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); renderTests(); renderReport(); renderHeader(); }
+
+/* ================= HELPERS ================= */
+const $ = s => document.querySelector(s);
+function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function cefrTag(lv){
+  const map = { 'A2':'tag-red','B1':'tag-yellow','B1+':'tag-yellow','B2':'tag-green','B2+':'tag-green','C1':'tag-blue' };
+  return `<span class="tag ${map[lv]||'tag-gray'}">${lv}</span>`;
+}
+
+/* ================= TEST DEFINITIONS ================= */
+const PARTS = [
+  { id:'vocab', emoji:'📖', name:'Part 1 · 詞彙量', meta:'40 題 · 15 分鐘 · 手機', desc:'詞義配對，字頻分層抽樣，測出詞彙量估算＋CEFR' },
+  { id:'grammar', emoji:'✍️', name:'Part 2 · 語法', meta:'30 題 · 12 分鐘 · 手機', desc:'時態/介詞/冠詞/條件句——辦公室書信場景' },
+  { id:'reading', emoji:'📚', name:'Part 3 · 閱讀', meta:'2 篇計時 · 15 分鐘', desc:'B1 辦公室 memo＋B2 政府通告——測讀速＋理解' },
+  { id:'listening', emoji:'🎧', name:'Part 4 · 聽力', meta:'2 段 · 各聽一次 · 15 分鐘', desc:'語音朗讀一次過——擬真聽解測試' },
+  { id:'speaking', emoji:'🗣️', name:'Part 5 · 口語', meta:'錄音任務 · 20 分鐘', desc:'1 分鐘自我介紹＋3 條面試題——自評＋ZCode 批改' },
+  { id:'writing', emoji:'✉️', name:'Part 6 · 寫作', meta:'計時 15 分鐘', desc:'秘書實境 email——ZCode CEFR 批改' }
+];
+
+/* ---------- Part 1 詞彙：[word, correctIdx, opts[4], band] ---------- */
+const VOCAB = [
+  ['decide',0,['決定','描述','延遲','懷疑'],1],
+  ['weather',1,['是否','天氣','氣味','皮革'],1],
+  ['important',0,['重要的','耐心的','免費的','即時的'],1],
+  ['remember',2,['提醒','移除','記得','回覆'],1],
+  ['arrive',0,['到達','離開','申請','抵抗'],1],
+  ['healthy',3,['饑餓的','沉重的','富有的','健康的'],1],
+  ['achieve',1,['接受','達成','冒險','累積'],2],
+  ['curious',0,['好奇的','認真的','小心的','慷慨的'],2],
+  ['familiar',2,['正式的','罕見的','熟悉的','類似的'],2],
+  ['persuade',0,['說服','迫使','建議','懲罰'],2],
+  ['borrow',1,['貸出','借入','購買','交換'],2],
+  ['imagine',0,['想像','管理','影響','模仿'],2],
+  ['abandon',0,['放棄','逮捕','綁架','分析'],3],
+  ['adequate',2,['高級的','迅速的','足夠的','大膽的'],3],
+  ['ancient',1,['科學的','古代的','人造的','焦慮的'],3],
+  ['enormous',0,['巨大的','誠實的','著名的','吵鬧的'],3],
+  ['gradual',3,['感謝的','中央的','互惠的','逐漸的'],3],
+  ['vague',0,['模糊的','寬闊的','輕微的','脆弱的'],3],
+  ['ambiguous',1,['雄心勃勃的','模稜兩可的','周到的','明確的'],4],
+  ['comply',0,['遵從','抱怨','補償','彙編'],4],
+  ['distinguish',2,['消失','分散','區分','幻想'],4],
+  ['inevitable',0,['不可避免的','無形的','不活躍的','不平等的'],4],
+  ['reluctant',3,['相關的','多餘的','可靠的','不情願的'],4],
+  ['alleviate',0,['紓緩','加劇','對齊','分配'],5],
+  ['coherent',1,['混亂的','連貫的','有禮的','簡短的'],5],
+  ['deteriorate',0,['惡化','偏離','決定','沉澱'],5],
+  ['explicit',2,['隱含的','爆炸的','明確的','延伸的'],5],
+  ['feasible',0,['可行的','可怕的','易碎的','多產的'],5],
+  ['candid',0,['坦率的','候選的','謹慎的','患病的'],6],
+  ['diligent',1,['聰明的','勤奮的','有禮的','懶惰的'],6],
+  ['eloquent',0,['雄辯的','安靜的','優雅的','精確的'],6],
+  ['frugal',3,['脆弱的','豐盛的','粗魯的','節儉的'],6],
+  ['adept',0,['熟練的','適應的','足夠的','傲慢的'],7],
+  ['mundane',1,['現代的','平凡的','莊嚴的','潮濕的'],7],
+  ['obsolete',0,['過時的','頑固的','明顯的','迂迴的'],7],
+  ['prudent',2,['篤信的','腐敗的','審慎的','迅速的'],7],
+  ['abate',1,['廢除','減弱','縮短','背棄'],8],
+  ['capricious',0,['反覆無常的','有能力的','開胃的','慷慨的'],8],
+  ['detrimental',2,['決定性的','短暫的','有害的','精神的'],8],
+  ['brevity',0,['簡短','勇氣','脆弱','財富'],8]
+];
+
+/* ---------- Part 2 語法 ---------- */
+const GRAMMAR = [
+  { q:'I ___ in this company since 2023.', o:['have worked','worked','am working','work'], a:0 },
+  { q:'She ___ the report when I called her yesterday.', o:['was preparing','prepared','has prepared','prepares'], a:0 },
+  { q:'By the time you arrive, the meeting ___ already started.', o:['will have','would have','has','will be'], a:0 },
+  { q:'We look forward to ___ from you soon.', o:['hear','hearing','heard','be hearing'], a:1 },
+  { q:'Please find ___ the updated schedule.', o:['attached','attach','attaching','attachment'], a:0 },
+  { q:'The manager is responsible ___ the whole department.', o:['of','for','to','with'], a:1 },
+  { q:"I'm interested ___ applying for the post.", o:['on','at','in','for'], a:2 },
+  { q:'The conference will be held ___ 15 November.', o:['in','on','at','by'], a:1 },
+  { q:'We arrived ___ the airport at 6 a.m.', o:['to','in','at','on'], a:2 },
+  { q:'Thank you ___ your prompt reply.', o:['for','of','to','with'], a:0 },
+  { q:'___ sun rises in the east.', o:['A','An','The','（不加冠詞）'], a:2 },
+  { q:'She is ___ honest employee.', o:['a','an','the','（不加冠詞）'], a:1 },
+  { q:'___ water in this cooler is free.', o:['A','An','The','（不加冠詞）'], a:2 },
+  { q:'Everyone in the team ___ the deadline.', o:['know','knows','knowing','are knowing'], a:1 },
+  { q:'Neither of the applicants ___ the requirements.', o:['meet','meets','meeting','have met'], a:1 },
+  { q:'The number of complaints ___ decreased this month.', o:['have','has','are','were'], a:1 },
+  { q:'If it rains tomorrow, the event ___ postponed.', o:['will be','would be','would have been','is being'], a:0 },
+  { q:'If I ___ you, I would apply now.', o:['am','was','were','be'], a:2 },
+  { q:'If she had submitted earlier, she ___ the discount.', o:['would get','would have got','will get','got'], a:1 },
+  { q:"You ___ submit the form before Friday; it's compulsory.", o:['might','could','must','would'], a:2 },
+  { q:"The file ___ be in the shared folder—I'm not sure.", o:['must','might','should have',"can't"], a:1 },
+  { q:"We ___ better double-check the figures.", o:['should','would','might','must'], a:0 },
+  { q:'She enjoys ___ with numbers.', o:['work','to work','working','worked'], a:2 },
+  { q:'They decided ___ the deadline.', o:['extend','extending','to extend','extended'], a:2 },
+  { q:'This report is ___ than the last one.', o:['concise','more concise','most concise','conciser'], a:1 },
+  { q:"It's ___ meeting room in the building.", o:['the large','the larger','the largest','largest'], a:2 },
+  { q:'Hardly ___ the office when the phone rang.', o:['I had entered','had I entered','I entered','did I enter'], a:1 },
+  { q:'The proposal, ___ was submitted last week, needs revision.', o:['that','which','who','what'], a:1 },
+  { q:'Not only the manager but also the staff ___ invited.', o:['was','were','is','has been'], a:1 },
+  { q:'I would appreciate ___ this matter urgently.', o:['you to look into','you looking into','that you look into','you looked into'], a:1 }
+];
+
+/* ---------- Part 3 閱讀 ---------- */
+const READING = [
+  {
+    level:'B1 · 辦公室 memo', words:172,
+    text:`<h4>MEMO</h4>
+<p><strong>To:</strong> All staff, Finance Department<br><strong>From:</strong> Amy Cheung, Office Manager<br><strong>Date:</strong> 12 October<br><strong>Subject:</strong> Temporary relocation to Level 5</p>
+<p>Dear colleagues,</p>
+<p>As you know, our office on Level 8 will be renovated starting next Monday. During the renovation period, all Finance staff will temporarily move to Level 5.</p>
+<p>Please note the following arrangements:</p>
+<p>1. Moving boxes will be distributed this Thursday. Please pack your personal belongings before Friday, 5 p.m.<br>
+2. IT will transfer your desktop computers on Saturday. Laptops should be taken home on Friday evening and brought to Level 5 on Monday.<br>
+3. The renovation is expected to last four weeks. We plan to return to Level 8 on 15 November.<br>
+4. During the relocation, telephone numbers will remain unchanged. However, internal mail will be delivered twice a day instead of three times.</p>
+<p>I understand that this may cause some inconvenience. Thank you for your cooperation. If you have any questions, please contact me at ext. 2310.</p>
+<p>Amy Cheung</p>`,
+    qs:[
+      { q:'Why is the department moving?', o:['辦公室要裝修','部門要裁員','租約到期','合併到另一部門'], a:0 },
+      { q:'Personal belongings must be packed by when?', o:['星期四中午前','星期五下午 5 時前','星期一早上','下星期三'], a:1 },
+      { q:'What should staff do with laptops?', o:['留喺枱面唔使理','交俾 IT 部門鎖好','星期五帶返屋企，星期一帶去 5 樓','全部留喺 8 樓'], a:2 },
+      { q:'How long is the renovation expected to last?', o:['兩星期','三星期','四星期','兩個月'], a:2 },
+      { q:'Which of the following is TRUE?', o:['電話號碼會改','內部郵件每日派三次','11 月 15 日返返 8 樓','紙箱星期一分發'], a:2 }
+    ]
+  },
+  {
+    level:'B2 · 政府通告格', words:228,
+    text:`<h4>Public Announcement: New Online Booking System for Public Sports Facilities</h4>
+<p>Starting from 1 December, the Leisure Services Office will launch a new online booking system for all public sports facilities, including badminton courts, swimming pools and fitness rooms.</p>
+<p>Under the new system, users may reserve facilities up to seven days in advance through the mobile app or the official website. Bookings made by phone will no longer be accepted after 30 November. Users who do not have a smartphone may use the self-service kiosks at each venue, which will be open daily from 7 a.m. to 10 p.m.</p>
+<p>To encourage early adoption, users who complete at least five bookings through the new system in December will receive a complimentary one-day pass in January.</p>
+<p>The Office reminds users that no-show records will now be tracked electronically. Users who fail to show up for three bookings within 30 days without prior cancellation will have their booking privileges suspended for 14 days. Cancellations must be made at least four hours before the reserved time slot.</p>
+<p>Enquiries may be directed to the hotline at 2345 6789 during office hours, or by email to booking@lso.gov.hk. Guided demonstrations of the new system will be held at all major venues on 25 and 26 November. Admission is free and no registration is required.</p>
+<p>We appreciate your continued support.</p>`,
+    qs:[
+      { q:'When will phone bookings stop being accepted?', o:['12 月 1 日起','11 月 30 日之後','即刻','明年 1 月'], a:1 },
+      { q:'What can users without a smartphone do?', o:['寫信申請','打熱線預約','用場地自助服務機','搵職員代訂'], a:2 },
+      { q:'What reward is offered for early adoption?', o:['現金回贈','免費一日證','半價優惠','優先訂場權'], a:1 },
+      { q:'What happens after three no-shows within 30 days?', o:['罰款 $100','停用網上系統','暫停訂場權 14 日','收警告信'], a:2 },
+      { q:'Which of the following is TRUE?', o:['示範活動唔使預先登記','熱線 24 小時服務','自助機 24 小時開放','12 月後重設電話預約'], a:0 }
+    ]
+  }
+];
+
+/* ---------- Part 4 聽力 ---------- */
+const LISTENING = [
+  {
+    level:'B1 · 電話留言', rate:0.95,
+    script:"Hi Zoe, it's Karen from the admin team. I'm calling about tomorrow's team meeting. The meeting was originally scheduled for ten o'clock in the small meeting room, but there's a problem. The client visit has been moved to eleven, so our meeting will start thirty minutes earlier, at nine thirty, in the same room. Could you also bring the printed copies of last month's sales report? We'll need about ten copies for everyone. One more thing. David can't join us tomorrow because he's on leave, so please send him the meeting minutes afterwards. If you have any questions, just give me a call before six this evening. Thanks a lot!",
+    qs:[
+      { q:'The meeting will now start at:', o:['9:30','10:00','10:30','11:00'], a:0 },
+      { q:'What should Zoe bring?', o:['會議議程','上月銷售報告打印本','膝上電腦','會議紀錄'], a:1 },
+      { q:"Why can't David attend?", o:['他要見客','他在放假','他病咗','他開另一個會'], a:1 },
+      { q:'What should Zoe send David afterwards?', o:['銷售報告','會議紀錄','時間表','客戶資料'], a:1 }
+    ]
+  },
+  {
+    level:'B2 · 機場廣播', rate:1.05,
+    script:"Attention please. This is an announcement for passengers on Flight CX 873 to Singapore. Due to adverse weather conditions over the region, the departure of this flight has been delayed by approximately two hours. The new departure time is now four forty five in the afternoon. Passengers are advised to remain in the vicinity of Gate twenty two, as boarding will begin forty minutes before departure. In addition, passengers transferring to connecting flights in Singapore should approach the airline's transfer desk located opposite Gate twenty two immediately for rebooking arrangements. The airline will provide meal vouchers worth eighty dollars per passenger, which can be collected at the transfer desk and used at restaurants in this terminal. We sincerely apologise for the inconvenience caused by this delay. For further assistance, please contact any of our ground staff. Thank you for your patience and understanding.",
+    qs:[
+      { q:'Why is the flight delayed?', o:['機件故障','惡劣天氣','航空交通管制','罷工'], a:1 },
+      { q:'The new departure time is:', o:['2:45 p.m.','3:45 p.m.','4:45 p.m.','5:45 p.m.'], a:2 },
+      { q:'Where is the transfer desk?', o:['22 號閘口對面','22 號閘口旁邊','入境大堂','頭等艙櫃台'], a:0 },
+      { q:'Each meal voucher is worth:', o:['$18','$40','$80','$100'], a:2 }
+    ]
+  }
+];
+
+/* ---------- Part 5 口語 ---------- */
+const SPEAKING_TASKS = {
+  A:{ title:'Task A · 1 分鐘英文自我介紹', hint:'計時 60 秒，一次過錄音。涵蓋：名字＋現職＋一個強項（帶例子）＋事業目標。', secs:60 },
+  B:{ title:'Task B · 3 條高頻面試題', hint:'每題講 30-60 秒，分開錄。之後用 Mac 聽寫轉文字，貼落下面個框。', secs:0, qs:[
+    'Q1 · Why do you want to join the civil service?',
+    'Q2 · What are your strengths and weaknesses?',
+    'Q3 · Describe a time you worked under pressure. What did you do?'
+  ]}
+};
+
+/* ---------- Part 6 寫作 ---------- */
+const WRITING_TASK = {
+  prompt:'Your manager, Mr Chan, has asked you to reply to an email from a client, Ms Lee. Ms Lee requested a project meeting this Friday at 2 p.m., but Mr Chan will be out of town that day. Write a reply email (80-120 words) that:',
+  points:['thanks her and apologises','explains Mr Chan is unavailable on Friday','proposes Monday 10 a.m. as an alternative','asks her to confirm'],
+  minutes:15
+};
+
+/* ================= RUNNER ================= */
+let R = null; // active run
+function openRunner(partId){
+  const p = PARTS.find(x=>x.id===partId);
+  $('#runner').classList.add('open');
+  document.body.style.overflow='hidden';
+  $('#runner-title').textContent = p.emoji + ' ' + p.name;
+  if(partId==='vocab') runMCQ('vocab');
+  else if(partId==='grammar') runMCQ('grammar');
+  else if(partId==='reading') runReading();
+  else if(partId==='listening') runListening();
+  else if(partId==='speaking') runSpeaking();
+  else if(partId==='writing') runWriting();
+}
+function closeRunner(){
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  clearInterval(R && R.timerId);
+  $('#runner').classList.remove('open');
+  document.body.style.overflow='';
+  R = null;
+}
+$('#runner-close').addEventListener('click', ()=>{ closeRunner(); });
+function setCount(t){ $('#runner-count').textContent = t; }
+function body(html){ $('#runner-body').innerHTML = html; }
+function actions(html){ $('#runner-actions').innerHTML = html; }
+
+/* ---------- MCQ runner (vocab / grammar) ---------- */
+function runMCQ(kind){
+  const items = kind==='vocab' ? VOCAB : GRAMMAR;
+  let i = 0, correct = 0;
+  const bandStats = {};
+  function show(){
+    if(i >= items.length){ return finish(); }
+    setCount(`${i+1} / ${items.length}`);
+    if(kind==='vocab'){
+      const it = items[i];
+      body(`
+        <div class="q-card">
+          <div class="q-word">${it[0]}</div>
+          <div class="q-hint">揀正確中文意思</div>
+          ${it[2].map((o,idx)=>`<button class="opt-btn" data-i="${idx}">${esc(o)}</button>`).join('')}
+        </div>`);
+      $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const pick = +b.dataset.i;
+          if(pick === items[i][1]){
+            correct++;
+            const bd = items[i][3];
+            bandStats[bd] = bandStats[bd] || {t:0,c:0};
+            bandStats[bd].t++; bandStats[bd].c++;
+          } else {
+            const bd = items[i][3];
+            bandStats[bd] = bandStats[bd] || {t:0,c:0};
+            bandStats[bd].t++;
+          }
+          i++; show();
+        });
+      });
+    } else {
+      const it = items[i];
+      body(`
+        <div class="q-card">
+          <div class="q-sentence">${esc(it.q).replace(/___/g,'<span style="color:var(--pale-blue-text); font-weight:700;">＿＿＿</span>')}</div>
+          ${it.o.map((o,idx)=>`<button class="opt-btn" data-i="${idx}">${esc(o)}</button>`).join('')}
+        </div>`);
+      $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          if(+b.dataset.i === items[i].a) correct++;
+          i++; show();
+        });
+      });
+    }
+  }
+  function finish(){
+    setCount('');
+    if(kind==='vocab'){
+      // vocab estimate: highest band with >=50% correct, interpolate
+      let est = 0;
+      for(let b=1; b<=8; b++){
+        const st = bandStats[b];
+        if(st && st.c / st.t >= 0.5) est = (b-1)*1000 + Math.round(st.c/st.t*1000);
+        else break;
+      }
+      if(est < 800) est = Math.round(correct/6*800);
+      const lv = est<1500?'A2': est<2500?'B1': est<3500?'B1+': est<5000?'B2': est<6500?'B2+':'C1';
+      S.results.vocab = { correct, total:items.length, estimate:est, cefr:lv, bandStats, date:today() };
+      save();
+      body(`<div class="score-hero">
+          <div class="big">≈ ${est.toLocaleString()}</div>
+          <div class="label">詞彙量估算（字族）</div>
+          <div style="margin-top:14px;">${cefrTag(lv)} <span style="font-size:13px; color:var(--text-muted);">答對 ${correct}/${items.length}</span></div>
+        </div>
+        <div class="note-box">📌 詞彙量對照：A2≈1,500｜B1≈2,500｜B2≈4,000-5,000｜C1≈8,000。呢個係「識認」量（被動詞彙）——輸出用嘅主動詞彙通常打七折。</div>`);
+      actions(`<button class="btn-primary" onclick="closeRunner()">✅ 完成，返回摸底頁</button>`);
+    } else {
+      const pct = Math.round(correct/items.length*100);
+      const lv = pct>=85?'B2+': pct>=70?'B1+': pct>=55?'B1': pct>=40?'A2+':'A2';
+      S.results.grammar = { correct, total:items.length, pct, cefr:lv, date:today() };
+      save();
+      body(`<div class="score-hero">
+          <div class="big">${pct}%</div>
+          <div class="label">語法準確度</div>
+          <div style="margin-top:14px;">${cefrTag(lv)} <span style="font-size:13px; color:var(--text-muted);">答對 ${correct}/${items.length}</span></div>
+        </div>
+        <div class="note-box">📌 錯開嘅題型 ZCode 會喺批改時逐條分析——記得去「報告」tab 複製摘要交俾 ZCode。</div>`);
+      actions(`<button class="btn-primary" onclick="closeRunner()">✅ 完成，返回摸底頁</button>`);
+    }
+  }
+  show();
+}
+
+/* ---------- Reading runner ---------- */
+function runReading(){
+  let idx = 0, results = [];
+  function intro(){
+    setCount(`${idx+1} / ${READING.length}`);
+    const p = READING[idx];
+    const t0 = Date.now();
+    body(`
+      <div class="q-card">
+        <div class="tag tag-blue" style="margin-bottom:8px;">${p.level}</div>
+        <div class="info-block" style="font-size:12.5px; color:var(--text-muted); margin-bottom:4px;">⏱️ 由你見到文章嗰刻開始計時——正常速度讀一次，唔好逐字逐句啃。</div>
+        <div class="passage-box">${p.text}</div>
+      </div>`);
+    actions(`<button class="btn-primary" id="r-done">👁️ 我睇完了，開始答題</button>`);
+    $('#r-done').addEventListener('click', ()=>{
+      const mins = (Date.now()-t0)/60000;
+      answer(mins);
+    });
+  }
+  function answer(mins){
+    const p = READING[idx];
+    let qi = 0, correct = 0;
+    function q(){
+      if(qi>=p.qs.length) return done();
+      setCount(`第 ${qi+1} / ${p.qs.length} 題`);
+      const q = p.qs[qi];
+      body(`<div class="q-card">
+        <div class="q-sentence">${esc(q.q)}</div>
+        ${q.o.map((o,k)=>`<button class="opt-btn" data-i="${k}">${esc(o)}</button>`).join('')}
+      </div>`);
+      $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          if(+b.dataset.i === q.a) correct++;
+          qi++; q();
+        });
+      });
+    }
+    function done(){
+      const wpm = Math.round(p.words / Math.max(mins, 0.2));
+      const acc = Math.round(correct/p.qs.length*100);
+      results.push({ level:p.level, wpm, acc, correct, total:p.qs.length });
+      idx++;
+      if(idx < READING.length) intro();
+      else finishAll();
+    }
+    function finishAll(){
+      const avgWpm = Math.round(results.reduce((s,r)=>s+r.wpm,0)/results.length);
+      const avgAcc = Math.round(results.reduce((s,r)=>s+r.acc,0)/results.length);
+      const lv = (avgAcc>=80 && avgWpm>=200)?'B2': (avgAcc>=70 && avgWpm>=150)?'B1': (avgAcc>=60)?'A2+':'A2';
+      S.results.reading = { avgWpm, avgAcc, results, cefr:lv, date:today() };
+      save();
+      setCount('');
+      body(`<div class="score-hero">
+          <div class="big">${avgWpm} <span style="font-size:16px; font-weight:400; color:var(--text-muted);">wpm</span></div>
+          <div class="label">平均閱讀速度</div>
+          <div style="margin-top:14px;">${cefrTag(lv)} <span style="font-size:13px; color:var(--text-muted);">理解準確度 ${avgAcc}%</span></div>
+        </div>
+        <div style="padding:0 4px;">
+          ${results.map(r=>`<div class="skill-row"><div class="s-top"><span class="s-name">${r.level}</span><span class="tag tag-gray">${r.correct}/${r.total}</span></div><div class="s-metric">${r.wpm} wpm · 準確 ${r.acc}%</div></div>`).join('')}
+        </div>
+        <div class="note-box">📌 對照：B1 讀速約 150-200 wpm｜B2 約 200-250 wpm。</div>`);
+      actions(`<button class="btn-primary" onclick="closeRunner()">✅ 完成，返回摸底頁</button>`);
+    }
+    q();
+  }
+  intro();
+}
+
+/* ---------- Listening runner ---------- */
+function runListening(){
+  let idx = 0, correctTotal = 0, qTotal = 0;
+  function stage(){
+    if(idx >= LISTENING.length) return finish();
+    const L = LISTENING[idx];
+    setCount(`${idx+1} / ${LISTENING.length}`);
+    let played = false;
+    body(`
+      <div class="q-card">
+        <div class="tag tag-blue" style="margin-bottom:10px;">${L.level}</div>
+        <div class="info-block" style="font-size:12.5px; color:var(--text-muted);">🔊 機器朗讀，只可以聽<strong>一次</strong>——撳之前集中注意力，播完即刻答題。</div>
+        <div style="height:12px;"></div>
+        <button class="btn-play" id="l-play">▶️ 播放（一次）</button>
+      </div>`);
+    $('#l-play').addEventListener('click', ()=>{
+      if(played) return;
+      played = true;
+      const btn = $('#l-play');
+      btn.disabled = true; btn.textContent = '🎧 播放中…';
+      if(!window.speechSynthesis){
+        btn.textContent = '❌ 此瀏覽器唔支援語音——話俾 ZCode 知，改用錄音檔';
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(L.script);
+      u.lang = 'en-US'; u.rate = L.rate;
+      const voices = speechSynthesis.getVoices();
+      const v = voices.find(v=>v.lang && v.lang.startsWith('en'));
+      if(v) u.voice = v;
+      u.onend = ()=>{ btn.textContent = '✅ 已播放（一次為限）'; askQuestions(); };
+      u.onerror = ()=>{ btn.textContent = '❌ 播放失敗——話俾 ZCode 知'; };
+      speechSynthesis.speak(u);
+    });
+    function askQuestions(){
+      let qi = 0, correct = 0;
+      function q(){
+        if(qi>=L.qs.length){
+          correctTotal += correct; qTotal += L.qs.length;
+          idx++; stage(); return;
+        }
+        setCount(`第 ${qi+1} / ${L.qs.length} 題`);
+        const q = L.qs[qi];
+        body(`<div class="q-card">
+          <div class="tag tag-blue" style="margin-bottom:8px;">${L.level}</div>
+          <div class="q-sentence">${esc(q.q)}</div>
+          ${q.o.map((o,k)=>`<button class="opt-btn" data-i="${k}">${esc(o)}</button>`).join('')}
+        </div>`);
+        $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
+          b.addEventListener('click', ()=>{
+            if(+b.dataset.i === q.a) correct++;
+            qi++; q();
+          });
+        });
+      }
+      q();
+    }
+  }
+  function finish(){
+    setCount('');
+    const lv = correctTotal>=7?'B2': correctTotal>=5?'B1': correctTotal>=3?'A2+':'A2';
+    S.results.listening = { correct:correctTotal, total:qTotal, cefr:lv, date:today() };
+    save();
+    body(`<div class="score-hero">
+        <div class="big">${correctTotal} <span style="font-size:16px; font-weight:400; color:var(--text-muted);">/ ${qTotal}</span></div>
+        <div class="label">聽解題數</div>
+        <div style="margin-top:14px;">${cefrTag(lv)}</div>
+      </div>
+      <div class="note-box">📌 8 題對 7+＝B2｜5-6＝B1｜3-4＝A2+。如果係「聽唔到」而唔係「聽唔明」，都話俾 ZCode 知——訓練方法唔同。</div>`);
+    actions(`<button class="btn-primary" onclick="closeRunner()">✅ 完成，返回摸底頁</button>`);
+  }
+  stage();
+}
+
+/* ---------- Speaking runner ---------- */
+function runSpeaking(){
+  setCount('');
+  body(`
+    <div class="q-card">
+      <div class="section-h" style="margin-top:0;">🎙️ 任務卡</div>
+      <div class="card" style="margin-bottom:10px;">
+        <div class="li-strong">${SPEAKING_TASKS.A.title}</div>
+        <div class="li-sub" style="margin:4px 0 10px;">${SPEAKING_TASKS.A.hint}</div>
+        <button class="btn-secondary" id="spk-timer" style="margin-bottom:0;">⏱️ 開始 60 秒計時</button>
+        <div class="timer-big" id="spk-clock" style="display:none;">1:00</div>
+      </div>
+      <div class="card" style="margin-bottom:10px;">
+        <div class="li-strong">${SPEAKING_TASKS.B.title}</div>
+        <div class="li-sub" style="margin:4px 0 6px;">${SPEAKING_TASKS.B.hint}</div>
+        ${SPEAKING_TASKS.B.qs.map(q=>`<div style="padding:8px 0; border-top:1px solid var(--border); font-size:13.5px;">${q}</div>`).join('')}
+      </div>
+
+      <div class="section-h">✅ 自評勾選（誠實填——自評呃自己）</div>
+      <div class="card">
+        <label class="check-line"><input type="checkbox" id="spk-c1"><span>我講滿／接近 1 分鐘（Task A）</span></label>
+        <label class="check-line"><input type="checkbox" id="spk-c2"><span>停頓超過 5 秒冇多過 3 次</span></label>
+        <label class="check-line"><input type="checkbox" id="spk-c3"><span>有講具體例子（唔係齋形容詞）</span></label>
+        <label class="check-line"><input type="checkbox" id="spk-c4"><span>有清晰開場同收結</span></label>
+        <label class="check-line"><input type="checkbox" id="spk-c5"><span>聽返錄音，大致每句都聽得明自己講乜</span></label>
+        <div style="margin-top:12px;">
+          <div class="card-label">自評等級（整體）</div>
+          <select class="zselect" id="spk-level">
+            <option value="">——揀一個——</option>
+            <option value="A2">A2 · 仲好基本，句子好短</option>
+            <option value="B1">B1 · 應付到，但成日卡同錯</option>
+            <option value="B2">B2 · 幾流暢，小錯唔阻溝通</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-h">📝 轉文字稿（Mac 聽寫／打返出嚟）</div>
+      <div class="note-box">Mac 聽寫：系統設定 → 鍵盤 → 聽寫（掣兩下即可用）。播自己錄音→開聽寫→稿自動出。貼落下面，連同成績摘要交 ZCode 客觀批改。</div>
+      <textarea class="ztextarea" id="spk-transcript" placeholder="貼 Task A 自我介紹嘅文字稿（Task B 有心機都得）…"></textarea>
+    </div>`);
+  actions(`<button class="btn-primary" id="spk-save">✅ 儲存口語自評</button>`);
+  let tid = null;
+  $('#spk-timer').addEventListener('click', ()=>{
+    const clock = $('#spk-clock');
+    if(tid){ clearInterval(tid); tid=null; $('#spk-timer').textContent='⏱️ 重新計時'; return; }
+    let s = 60; clock.style.display='block'; clock.textContent='1:00';
+    $('#spk-timer').textContent='⏸️ 停止';
+    tid = setInterval(()=>{
+      s--;
+      clock.textContent = '0:' + String(s).padStart(2,'0');
+      if(s<=0){ clearInterval(tid); tid=null; clock.textContent='⏹️ 時間到'; $('#spk-timer').textContent='⏱️ 重新計時'; }
+    },1000);
+  });
+  $('#spk-save').addEventListener('click', ()=>{
+    const checks = [1,2,3,4,5].map(n=>$('#spk-c'+n).checked);
+    const score = checks.filter(Boolean).length;
+    const lv = $('#spk-level').value || (score>=4?'B1':score>=2?'A2+':'A2');
+    S.results.speaking = { score, total:5, checks, selfLevel:lv, cefr:lv, transcript:$('#spk-transcript').value.trim(), date:today(), confirmed:false };
+    save();
+    body(`<div class="score-hero">
+        <div class="big">${score} <span style="font-size:16px; font-weight:400; color:var(--text-muted);">/ 5</span></div>
+        <div class="label">口語自評（暫定 ${lv}）</div>
+      </div>
+      <div class="note-box">📌 自評只係暫定——文字稿交俾 ZCode 客觀批改先算完成（會評內容結構／語法／詞彙三維）。</div>`);
+    actions(`<button class="btn-primary" onclick="closeRunner()">✅ 完成，返回摸底頁</button>`);
+  });
+}
+
+/* ---------- Writing runner ---------- */
+function runWriting(){
+  setCount('');
+  body(`
+    <div class="q-card">
+      <div class="section-h" style="margin-top:0;">✉️ 任務：回覆客戶 email</div>
+      <div class="passage-box" style="font-size:13.5px;">
+        <p>${WRITING_TASK.prompt}</p>
+        <p style="margin:0;">${WRITING_TASK.points.map((p,i)=>`${i+1}. ${esc(p)}`).join('<br>')}</p>
+      </div>
+      <div class="note-box">📝 80-120 字。計時 ${WRITING_TASK.minutes} 分鐘——擬真考場，唔查字典。開咗計時個 textarea 先解鎖。</div>
+      <div class="timer-big" id="wr-clock" style="display:none;">15:00</div>
+      <button class="btn-secondary" id="wr-start">⏱️ 開始計時＋解鎖作答</button>
+      <div style="height:8px;"></div>
+      <textarea class="ztextarea" id="wr-text" disabled placeholder="Dear Ms Lee, ..."></textarea>
+      <div style="text-align:right; font-size:12px; color:var(--text-muted); margin-top:6px;" class="mono"><span id="wr-count">0</span> words</div>
+    </div>`);
+  actions(`
+    <button class="btn-primary" id="wr-save">✅ 儲存＋交 ZCode 批改</button>
+    <button class="btn-secondary" id="wr-copy">📋 複製全文（貼去 ZCode 對話）</button>`);
+  const ta = $('#wr-text');
+  ta.addEventListener('input', ()=>{
+    $('#wr-count').textContent = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+  });
+  let tid = null, locked = false;
+  $('#wr-start').addEventListener('click', ()=>{
+    ta.disabled = false; ta.focus();
+    let total = WRITING_TASK.minutes*60;
+    const clock = $('#wr-clock'); clock.style.display='block';
+    $('#wr-start').disabled = true; $('#wr-start').textContent='⏳ 計時中…';
+    tid = setInterval(()=>{
+      total--;
+      const m = Math.floor(total/60), s = total%60;
+      clock.textContent = m + ':' + String(s).padStart(2,'0');
+      if(total<=0){
+        clearInterval(tid); locked = true; ta.disabled = true;
+        clock.textContent = '⏹️ 時間到——已鎖定';
+        $('#wr-start').textContent = '✅ 已收卷';
+      }
+    },1000);
+  });
+  $('#wr-copy').addEventListener('click', ()=>{
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      $('#wr-copy').textContent = '✅ 已複製';
+    }).catch(()=>{ $('#wr-copy').textContent = '長按全文手動複製'; });
+  });
+  $('#wr-save').addEventListener('click', ()=>{
+    clearInterval(tid);
+    const wc = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+    if(wc < 20){ alert('全文太短——認真寫夠 80-120 字先好儲存。'); return; }
+    S.results.writing = { words:wc, text:ta.value, cefr:'待批改', date:today() };
+    save();
+    body(`<div class="score-hero">
+        <div class="big">${wc}<span style="font-size:16px; font-weight:400; color:var(--text-muted);"> words</span></div>
+        <div class="label">寫作已交 · CEFR 待 ZCode 批改</div>
+      </div>
+      <div class="note-box">📌 撳「複製全文」貼去 ZCode 對話——ZCode 會評：任務完成度／語法／詞彙／語域（email 慣用語）四維，評完等級返嚟呢度揀返記錄。</div>
+      <div style="margin-top:10px;">
+        <div class="card-label">ZCode 評級（批改完先揀）</div>
+        <select class="zselect" id="wr-level" onchange="setWritingLevel(this.value)">
+          <option value="">——待批改——</option>
+          <option value="A2">A2</option><option value="B1">B1</option>
+          <option value="B1+">B1+</option><option value="B2">B2</option>
+          <option value="B2+">B2+</option><option value="C1">C1</option>
+        </select>
+      </div>`);
+    actions(`<button class="btn-primary" onclick="closeRunner()">✅ 完成，返回摸底頁</button>`);
+  });
+}
+function setWritingLevel(v){
+  if(S.results.writing && v){ S.results.writing.cefr = v; S.results.writing.confirmed = true; save(); }
+}
+
+/* ================= RENDER ================= */
+function today(){ return new Date().toISOString().slice(0,10); }
+function partScoreLine(id){
+  const r = S.results[id];
+  if(!r) return null;
+  switch(id){
+    case 'vocab': return `詞彙量 ≈${r.estimate.toLocaleString()} 字族 · 答對 ${r.correct}/${r.total} · ${r.cefr}`;
+    case 'grammar': return `準確度 ${r.pct}% · 答對 ${r.correct}/${r.total} · ${r.cefr}`;
+    case 'reading': return `讀速 ${r.avgWpm} wpm · 準確 ${r.avgAcc}% · ${r.cefr}`;
+    case 'listening': return `聽解 ${r.correct}/${r.total} · ${r.cefr}`;
+    case 'speaking': return `自評 ${r.score}/5 · 暫定 ${r.cefr}${r.confirmed?'（已確認）':'（待 ZCode 確認）'}`;
+    case 'writing': return `${r.words} words · ${r.cefr}${r.confirmed?'（已確認）':''}`;
+  }
+}
+function renderTests(){
+  const el = $('#test-list');
+  el.innerHTML = PARTS.map(p=>{
+    const r = S.results[p.id];
+    const line = partScoreLine(p.id);
+    return `<button class="test-row" data-id="${p.id}">
+      <div class="row-top">
+        <span style="font-size:18px;">${p.emoji}</span>
+        <span class="row-name">${p.name}</span>
+        ${r ? `<span class="tag tag-green">已完成</span>` : `<span class="tag tag-gray">未測</span>`}
+      </div>
+      <div class="row-meta">${p.meta}</div>
+      <div class="row-meta" style="color:var(--text);">${p.desc}</div>
+      ${line ? `<div class="row-score" style="color:var(--pale-green-text);">${line}</div>` : ''}
+      <div class="row-score" style="color:var(--pale-blue-text); font-weight:600;">${r?'重新測（會覆蓋舊成績）':'開始測試 →'}</div>
+    </button>`;
+  }).join('');
+  el.querySelectorAll('.test-row').forEach(b=>{
+    b.addEventListener('click', ()=>openRunner(b.dataset.id));
+  });
+}
+function renderHeader(){
+  const done = PARTS.filter(p=>S.results[p.id]).length;
+  $('#hdr-progress-num').textContent = `${done} / 6`;
+  $('#hdr-progress-fill').style.width = (done/6*100)+'%';
+}
+function renderReport(){
+  const skills = [
+    { id:'vocab', emoji:'📖', name:'詞彙量' },
+    { id:'grammar', emoji:'✍️', name:'語法' },
+    { id:'reading', emoji:'📚', name:'閱讀' },
+    { id:'listening', emoji:'🎧', name:'聽力' },
+    { id:'speaking', emoji:'🗣️', name:'口語' },
+    { id:'writing', emoji:'✉️', name:'寫作' }
+  ];
+  const skEl = $('#report-skills');
+  const any = skills.some(s=>S.results[s.id]);
+  if(!any){ skEl.innerHTML = `<div class="info-block" style="color:var(--text-muted)">未有任何測試成績——去「摸底」度開始第一部分。</div>`; }
+  else {
+    skEl.innerHTML = skills.map(s=>{
+      const r = S.results[s.id];
+      const metric = partScoreLine(s.id);
+      if(!r) return `<div class="skill-row"><div class="s-top"><span class="s-name">${s.emoji} ${s.name}</span><span class="tag tag-gray">未測</span></div></div>`;
+      return `<div class="skill-row">
+        <div class="s-top"><span class="s-name">${s.emoji} ${s.name}</span>${cefrTag(r.cefr)}</div>
+        <div class="s-metric">${metric}</div>
+      </div>`;
+    }).join('');
+  }
+  // summary
+  const sumEl = $('#report-summary');
+  const lvOrder = {'A2':1,'A2+':1.5,'B1':2,'B1+':2.5,'B2':3,'B2+':3.5,'C1':4};
+  const tested = skills.filter(s=>S.results[s.id] && S.results[s.id].cefr && lvOrder[S.results[s.id].cefr]);
+  if(tested.length >= 4){
+    const sorted = [...tested].sort((a,b)=> (lvOrder[S.results[a.id].cefr]||0) - (lvOrder[S.results[b.id].cefr]||0));
+    const weakest = sorted[0], strongest = sorted[sorted.length-1];
+    const spk = S.results.speaking, lis = S.results.listening;
+    let interview;
+    if(!spk || !lis){
+      interview = '🎤 面試準備度：未知——口語／聽力未測齊。面試最貼身嘅正正係呢兩科。';
+    } else if((lvOrder[spk.cefr]||0) >= 2.5 && (lvOrder[lis.cefr]||0) >= 2.5){
+      interview = '🎤 面試準備度：有基本彈藥——目標係衝 B2 穩陣線。';
+    } else {
+      interview = '🎤 面試準備度：偏弱——面試前口語聽力要重點補。';
+    }
+    sumEl.innerHTML = `<ul class="clean">
+      <li><div class="li-strong">💪 最強：${strongest.emoji} ${strongest.name} <span class="tag tag-green">${S.results[strongest.id].cefr}</span></div><div class="li-sub">${partScoreLine(strongest.id)}</div></li>
+      <li><div class="li-strong">🎯 最弱：${weakest.emoji} ${weakest.name} <span class="tag tag-red">${S.results[weakest.id].cefr}</span></div><div class="li-sub">${partScoreLine(weakest.id)}——提升計劃第一優先</div></li>
+      <li><div class="li-strong">${interview}</div></li>
+      <li><div class="li-strong">⌨️ 英打 21.4 wpm（另計）</div><div class="li-sub">詞彙量越高，打字個「腦緩衝區」越大——兩線協同</div></li>
+    </ul>`;
+  } else {
+    sumEl.innerHTML = `<div class="info-block" style="color:var(--text-muted)">等六部分完成（或至少完成 4 部分）先有綜合判讀。已測 ${tested.length}/6。</div>`;
+  }
+}
+
+/* copy summary */
+$('#btn-copy-summary').addEventListener('click', ()=>{
+  const lines = ['🩺 英文摸底成績（' + today() + '）'];
+  PARTS.forEach(p=>{
+    const m = partScoreLine(p.id);
+    lines.push(`${p.emoji} ${p.name}：${m||'未測'}`);
+  });
+  lines.push('⌨️ 英打：21.4 net wpm（已有數據）');
+  const spk = S.results.speaking, wr = S.results.writing;
+  if(spk && spk.transcript){ lines.push('——口語文字稿——'); lines.push(spk.transcript); }
+  if(wr && wr.text){ lines.push('——寫作全文——'); lines.push(wr.text); }
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    $('#btn-copy-summary').textContent = '✅ 已複製——貼去 ZCode 對話';
+    setTimeout(()=>{ $('#btn-copy-summary').textContent = '📋 複製成績摘要'; }, 2500);
+  }).catch(()=>{ alert('複製失敗——長按下面文字手動複製：\n\n'+lines.join('\n')); });
+});
+$('#btn-reset').addEventListener('click', ()=>{
+  if(confirm('確定重設全部摸底成績？重新摸底用——舊數據會刪除。')){
+    S = fresh(); save();
+    alert('已重設。');
+  }
+});
+
+/* tabs */
+document.querySelectorAll('nav.tabs button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    $('#view-'+b.dataset.tab).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+renderTests(); renderReport(); renderHeader();
+if(window.speechSynthesis) speechSynthesis.getVoices(); // warm up voice list on iOS
+</script>
+</body>
+</html>
