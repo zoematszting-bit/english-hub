@@ -27,7 +27,7 @@
     font-family: 'Noto Sans HK', 'PingFang HK', -apple-system, sans-serif;
     background: var(--bg); color: var(--text);
     line-height: 1.6; font-size: 15px;
-    padding-bottom: 84px;
+    padding-bottom: 100px;
     -webkit-font-smoothing: antialiased;
   }
   .serif { font-family: 'Noto Serif HK', 'Songti TC', serif; }
@@ -84,8 +84,11 @@
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
     cursor: pointer; font-family: inherit; font-size: inherit; color: inherit;
+    touch-action: manipulation;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
-  .test-row:active { transform: scale(0.99); }
+  .test-row:active { background: var(--surface-2); }
   .test-row .row-top { display: flex; align-items: center; gap: 8px; }
   .test-row .row-name { font-size: 15px; font-weight: 600; flex: 1; }
   .test-row .row-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
@@ -350,7 +353,7 @@
   </section>
 
   <footer class="site-foot">
-    🩺 英文體檢站 v1.0 · 2026-10-15<br>
+    🩺 英文體檢站 v1.1 · 2026-10-15<br>
     ZCode × Zoe · 先量化，後訓練
   </footer>
 </div>
@@ -972,7 +975,7 @@ function renderTests(){
   el.innerHTML = PARTS.map(p=>{
     const r = S.results[p.id];
     const line = partScoreLine(p.id);
-    return `<button class="test-row" data-id="${p.id}">
+    return `<div class="test-row" role="button" tabindex="0" data-id="${p.id}">
       <div class="row-top">
         <span style="font-size:18px;">${p.emoji}</span>
         <span class="row-name">${p.name}</span>
@@ -982,10 +985,13 @@ function renderTests(){
       <div class="row-meta" style="color:var(--text);">${p.desc}</div>
       ${line ? `<div class="row-score" style="color:var(--pale-green-text);">${line}</div>` : ''}
       <div class="row-score" style="color:var(--pale-blue-text); font-weight:600;">${r?'重新測（會覆蓋舊成績）':'開始測試 →'}</div>
-    </button>`;
+    </div>`;
   }).join('');
   el.querySelectorAll('.test-row').forEach(b=>{
     b.addEventListener('click', ()=>openRunner(b.dataset.id));
+    b.addEventListener('keydown', e=>{
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openRunner(b.dataset.id); }
+    });
   });
 }
 function renderHeader(){
