@@ -749,30 +749,55 @@ function runListening(){
     if(idx >= LISTENING.length) return finish();
     const L = LISTENING[idx];
     setCount(`${idx+1} / ${LISTENING.length}`);
-    let played = false;
+    let mode = 'idle'; // idle → playing → revealed/questions
+    function stopSpeech(){ try{ speechSynthesis.cancel(); }catch(e){} }
+    function reveal(reason){
+      if(mode !== 'idle' && mode !== 'playing') return;
+      mode = 'revealed';
+      stopSpeech();
+      body(`<div class="q-card">
+        <div class="tag tag-yellow" style="margin-bottom:10px;">${L.level} · ${reason}</div>
+        <div class="info-block" style="font-size:12.5px; color:var(--text-muted);">睇住文字稿當「聽」——<strong>只顯示一次</strong>，睇完撳開始答題。</div>
+        <div style="height:10px;"></div>
+        <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:14px; font-size:13.5px; line-height:1.9; color:var(--text);">${esc(L.script)}</div>
+        <div style="height:12px;"></div>
+        <button class="btn-play" id="l-next">✅ 睇完——開始答題</button>
+      </div>`);
+      $('#l-next').addEventListener('click', ()=>{ mode='questions'; askQuestions(); });
+    }
     body(`
       <div class="q-card">
         <div class="tag tag-blue" style="margin-bottom:10px;">${L.level}</div>
         <div class="info-block" style="font-size:12.5px; color:var(--text-muted);">🔊 機器朗讀，只可以聽<strong>一次</strong>——撳之前集中注意力，播完即刻答題。</div>
         <div style="height:12px;"></div>
         <button class="btn-play" id="l-play">▶️ 播放（一次）</button>
+        <div style="height:8px;"></div>
+        <button id="l-fallback" style="width:100%; padding:10px; border:1px dashed var(--border-strong); border-radius:10px; background:transparent; color:var(--text-muted); font-size:12px;">⚠️ 聽唔到／撳極冇反應？改用文字稿（一次）</button>
       </div>`);
+    $('#l-fallback').addEventListener('click', ()=>reveal('文字稿模式'));
     $('#l-play').addEventListener('click', ()=>{
-      if(played) return;
-      played = true;
+      if(mode !== 'idle') return;
+      mode = 'playing';
       const btn = $('#l-play');
       btn.disabled = true; btn.textContent = '🎧 播放中…';
-      if(!window.speechSynthesis){
-        btn.textContent = '❌ 此瀏覽器唔支援語音——話俾 ZCode 知，改用錄音檔';
-        return;
-      }
+      $('#l-fallback').style.display = 'none';
+      if(!window.speechSynthesis){ reveal('此瀏覽器唔支援語音'); return; }
+      stopSpeech(); // 清殘留狀態（iOS 常見卡死原因）
       const u = new SpeechSynthesisUtterance(L.script);
       u.lang = 'en-US'; u.rate = L.rate;
       const voices = speechSynthesis.getVoices();
       const v = voices.find(v=>v.lang && v.lang.startsWith('en'));
       if(v) u.voice = v;
-      u.onend = ()=>{ btn.textContent = '✅ 已播放（一次為限）'; askQuestions(); };
-      u.onerror = ()=>{ btn.textContent = '❌ 播放失敗——話俾 ZCode 知'; };
+      let ended = false;
+      const finishPlay = ()=>{ if(ended) return; ended = true; clearTimeout(guard); mode='questions'; btn.textContent = '✅ 已播放（一次為限）'; askQuestions(); };
+      // iOS Safari：onend 可能唔觸發——超時後備自動轉文字稿，保證一定答到題
+      const words = L.script.split(/\s+/).length;
+      const estMs = Math.max(10000, (words / (2.3 * L.rate)) * 1000) + 15000;
+      const guard = setTimeout(()=>{
+        if(!ended){ ended = true; stopSpeech(); reveal('語音超時·後備轉文字稿'); }
+      }, estMs);
+      u.onend = finishPlay;
+      u.onerror = ()=>{ if(!ended){ ended = true; clearTimeout(guard); reveal('播放失敗·後備轉文字稿'); } };
       speechSynthesis.speak(u);
     });
     function askQuestions(){
