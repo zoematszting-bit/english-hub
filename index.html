@@ -367,7 +367,7 @@
   </section>
 
   <footer class="site-foot">
-    🩺 英文體檢站 v1.3 · 2026-10-15<br>
+    🩺 英文體檢站 v1.4 · 2026-10-15<br>
     ZCode × Zoe · 先量化，後訓練
   </footer>
 </div>
@@ -721,14 +721,15 @@ function runReading(){
     function q(){
       if(qi>=p.qs.length) return done();
       setCount(`第 ${qi+1} / ${p.qs.length} 題`);
-      const q = p.qs[qi];
+      // 注意：唔可以命名做 const q——會遮蔽函數 q()，令撳選項時 q() 拋 TypeError 永遠停喺第一題
+      const cur = p.qs[qi];
       body(`<div class="q-card">
-        <div class="q-sentence">${esc(q.q)}</div>
-        ${q.o.map((o,k)=>`<button class="opt-btn" data-i="${k}">${esc(o)}</button>`).join('')}
+        <div class="q-sentence">${esc(cur.q)}</div>
+        ${cur.o.map((o,k)=>`<button class="opt-btn" data-i="${k}">${esc(o)}</button>`).join('')}
       </div>`);
       $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
         b.addEventListener('click', ()=>{
-          if(+b.dataset.i === q.a) correct++;
+          if(+b.dataset.i === cur.a) correct++;
           qi++; q();
         });
       });
@@ -830,15 +831,16 @@ function runListening(){
           idx++; stage(); return;
         }
         setCount(`第 ${qi+1} / ${L.qs.length} 題`);
-        const q = L.qs[qi];
+        // 注意：唔可以命名做 const q——會遮蔽函數 q()，令撳選項時 q() 拋 TypeError 永遠停喺第一題
+        const cur = L.qs[qi];
         body(`<div class="q-card">
           <div class="tag tag-blue" style="margin-bottom:8px;">${L.level}</div>
-          <div class="q-sentence">${esc(q.q)}</div>
-          ${q.o.map((o,k)=>`<button class="opt-btn" data-i="${k}">${esc(o)}</button>`).join('')}
+          <div class="q-sentence">${esc(cur.q)}</div>
+          ${cur.o.map((o,k)=>`<button class="opt-btn" data-i="${k}">${esc(o)}</button>`).join('')}
         </div>`);
         $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
           b.addEventListener('click', ()=>{
-            if(+b.dataset.i === q.a) correct++;
+            if(+b.dataset.i === cur.a) correct++;
             qi++; q();
           });
         });
