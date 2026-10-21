@@ -89,6 +89,11 @@
     -webkit-tap-highlight-color: transparent;
   }
   .test-row:active { background: var(--surface-2); }
+  .ip-reset {
+    margin-top: 6px; background: none; border: none; color: var(--text-muted);
+    font-size: 11.5px; text-decoration: underline; padding: 4px 0 0; cursor: pointer;
+    font-family: inherit; display: block;
+  }
   .test-row .row-top { display: flex; align-items: center; gap: 8px; }
   .test-row .row-name { font-size: 15px; font-weight: 600; flex: 1; }
   .test-row .row-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
@@ -255,7 +260,7 @@
 
   <!-- ============ TAB 1: TESTS ============ -->
   <section class="view active" id="view-tests">
-    <div class="note-box">⚠️ 測試規矩：一次過完成，唔查字典、唔用手機翻譯、唔問 AI——擬真先測到真實水平。測試結果只存你部機（localStorage），唔會上傳。</div>
+    <div class="note-box">⚠️ 測試規矩：一次過完成，唔查字典、唔用手機翻譯、唔問 AI——擬真先測到真實水平。測試結果只存你部機（localStorage），唔會上傳。<br>✅ <strong>進度自動保存</strong>——撳✕、切 app、閂瀏覽器都唔會唔見；返嚟撳返嗰部分就由上次位置繼續。</div>
 
     <div class="section-h">🧪 六部分摸底</div>
     <div id="test-list"></div>
@@ -367,7 +372,7 @@
   </section>
 
   <footer class="site-foot">
-    🩺 英文體檢站 v1.4 · 2026-10-15<br>
+    🩺 英文體檢站 v1.5 · 2026-10-15<br>
     ZCode × Zoe · 先量化，後訓練
   </footer>
 </div>
@@ -394,9 +399,31 @@
 /* ================= STATE ================= */
 const LS_KEY = 'englishHubV1';
 let S = load();
-function load(){ try { return JSON.parse(localStorage.getItem(LS_KEY)) || fresh(); } catch(e){ return fresh(); } }
-function fresh(){ return { results: {} }; }
+function load(){ try { const s = JSON.parse(localStorage.getItem(LS_KEY)); return s ? Object.assign(fresh(), s) : fresh(); } catch(e){ return fresh(); } }
+function fresh(){ return { results: {}, inprogress: {} }; }
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); renderTests(); renderReport(); renderHeader(); }
+
+/* ---------- 進度保存（斷點續測 · v1.5） ---------- */
+function ipGet(id){ return (S.inprogress || {})[id] || null; }
+function ipSet(id, obj){ if(!S.inprogress) S.inprogress = {}; S.inprogress[id] = obj; save(); }
+function ipClear(id){ if(S.inprogress){ delete S.inprogress[id]; save(); } }
+function ipDesc(id){
+  const ip = ipGet(id); if(!ip) return null;
+  try {
+    switch(id){
+      case 'vocab': case 'grammar': return `答到第 ${Math.min(ip.i+1, ip.total)} / ${ip.total} 題`;
+      case 'reading': return `第 ${(ip.idx||0)+1} / 2 篇·${ip.phase==='q' ? '答第 '+(ip.qi+1)+' 題' : '閱讀中'}`;
+      case 'listening': return `第 ${(ip.idx||0)+1} / 2 段·${ip.phase==='q' ? '答第 '+(ip.qi+1)+' 題' : '播放頁'}`;
+      case 'speaking': return (ip.transcript && ip.transcript.length > 10) ? '文字稿填寫中' : '自評進行中';
+      case 'writing': {
+        if(ip.locked) return '已收卷·未交批改';
+        if(ip.text && ip.text.trim()) return `草稿 ${ip.text.trim().split(/\s+/).length} 字·剩 ${Math.floor((ip.remaining||0)/60)}:${String((ip.remaining||0)%60).padStart(2,'0')}`;
+        return ip.running ? '計時中' : '未開始計時';
+      }
+    }
+  } catch(e){}
+  return '進行中';
+}
 
 /* ================= HELPERS ================= */
 const $ = s => document.querySelector(s);
@@ -612,8 +639,11 @@ function actions(html){ $('#runner-actions').innerHTML = html; }
 /* ---------- MCQ runner (vocab / grammar) ---------- */
 function runMCQ(kind){
   const items = kind==='vocab' ? VOCAB : GRAMMAR;
-  let i = 0, correct = 0;
-  const bandStats = {};
+  // 斷點續測：由上次位置恢復
+  const rs = ipGet(kind);
+  let i = (rs && typeof rs.i === 'number') ? Math.min(rs.i, items.length-1) : 0;
+  let correct = (rs && rs.correct) || 0;
+  const bandStats = (rs && rs.bandStats) || {};
   function show(){
     if(i >= items.length){ return finish(); }
     setCount(`${i+1} / ${items.length}`);
@@ -638,7 +668,9 @@ function runMCQ(kind){
             bandStats[bd] = bandStats[bd] || {t:0,c:0};
             bandStats[bd].t++;
           }
-          i++; show();
+          i++;
+          ipSet(kind, { i, correct, bandStats, total: items.length });
+          show();
         });
       });
     } else {
@@ -651,12 +683,15 @@ function runMCQ(kind){
       $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
         b.addEventListener('click', ()=>{
           if(+b.dataset.i === items[i].a) correct++;
-          i++; show();
+          i++;
+          ipSet(kind, { i, correct, total: items.length });
+          show();
         });
       });
     }
   }
   function finish(){
+    ipClear(kind);
     setCount('');
     if(kind==='vocab'){
       // vocab estimate: highest band with >=50% correct, interpolate
@@ -696,11 +731,15 @@ function runMCQ(kind){
 
 /* ---------- Reading runner ---------- */
 function runReading(){
-  let idx = 0, results = [];
+  // 斷點續測：由上次位置恢復
+  const rs = ipGet('reading');
+  let idx = (rs && typeof rs.idx === 'number') ? Math.min(rs.idx, READING.length-1) : 0;
+  let results = (rs && rs.results) || [];
   function intro(){
     setCount(`${idx+1} / ${READING.length}`);
     const p = READING[idx];
     const t0 = Date.now();
+    ipSet('reading', { idx, phase:'read', results });
     body(`
       <div class="q-card">
         <div class="tag tag-blue" style="margin-bottom:8px;">${p.level}</div>
@@ -710,14 +749,16 @@ function runReading(){
     actions(`<button class="btn-primary" id="r-done">👁️ 我睇完了，開始答題</button>`);
     $('#r-done').addEventListener('click', ()=>{
       const mins = (Date.now()-t0)/60000;
-      answer(mins);
+      answer(mins, 0, 0);
     }, { once: true });
   }
-  function answer(mins){
+  function answer(mins, rQi, rCorrect){
     // 即刻清走「我睇完了」掣——否則舊掣留喺底部，再撳會靜靜重頭開始答題
     actions('');
     const p = READING[idx];
-    let qi = 0, correct = 0;
+    // 閱讀時間：正常由 t0 計；斷點續測由上次記錄恢復（冇記錄就以 2 分鐘中位數計）
+    const readMins = (mins != null) ? mins : ((ipGet('reading')||{}).readMins || 2);
+    let qi = rQi || 0, correct = rCorrect || 0;
     function q(){
       if(qi>=p.qs.length) return done();
       setCount(`第 ${qi+1} / ${p.qs.length} 題`);
@@ -730,12 +771,14 @@ function runReading(){
       $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
         b.addEventListener('click', ()=>{
           if(+b.dataset.i === cur.a) correct++;
-          qi++; q();
+          qi++;
+          ipSet('reading', { idx, phase:'q', qi, correct, results, readMins });
+          q();
         });
       });
     }
     function done(){
-      const wpm = Math.round(p.words / Math.max(mins, 0.2));
+      const wpm = Math.round(p.words / Math.max(readMins, 0.2));
       const acc = Math.round(correct/p.qs.length*100);
       results.push({ level:p.level, wpm, acc, correct, total:p.qs.length });
       idx++;
@@ -743,6 +786,7 @@ function runReading(){
       else finishAll();
     }
     function finishAll(){
+      ipClear('reading');
       const avgWpm = Math.round(results.reduce((s,r)=>s+r.wpm,0)/results.length);
       const avgAcc = Math.round(results.reduce((s,r)=>s+r.acc,0)/results.length);
       const lv = (avgAcc>=80 && avgWpm>=200)?'B2': (avgAcc>=70 && avgWpm>=150)?'B1': (avgAcc>=60)?'A2+':'A2';
@@ -762,16 +806,30 @@ function runReading(){
     }
     q();
   }
-  intro();
+  // 斷點續測入口：答題緊 → 直接返去答題位；閱讀緊／未開始 → 由文章開始（計時重新計）
+  if(rs && rs.phase==='q'){ answer(null, rs.qi||0, rs.correct||0); }
+  else intro();
 }
 
 /* ---------- Listening runner ---------- */
 function runListening(){
-  let idx = 0, correctTotal = 0, qTotal = 0;
+  // 斷點續測：由上次位置恢復
+  const rs = ipGet('listening');
+  let idx = (rs && typeof rs.idx === 'number') ? Math.min(rs.idx, LISTENING.length-1) : 0;
+  let correctTotal = (rs && rs.correctTotal) || 0;
+  let qTotal = (rs && rs.qTotal) || 0;
+  let resumeUsed = false;
   function stage(){
     if(idx >= LISTENING.length) return finish();
     const L = LISTENING[idx];
     setCount(`${idx+1} / ${LISTENING.length}`);
+    // 斷點續測：上次答緊題 → 直接返去答題位（音已聽過，唔重播）
+    if(!resumeUsed && rs && rs.phase==='q' && rs.idx===idx){
+      resumeUsed = true;
+      askQuestions(rs.qi||0, rs.correct||0);
+      return;
+    }
+    ipSet('listening', { idx, phase:'play', correctTotal, qTotal });
     let mode = 'idle'; // idle → playing → revealed/questions
     function stopSpeech(){ try{ speechSynthesis.cancel(); }catch(e){} }
     function reveal(reason){
@@ -823,8 +881,8 @@ function runListening(){
       u.onerror = ()=>{ if(!ended){ ended = true; clearTimeout(guard); reveal('播放失敗·後備轉文字稿'); } };
       speechSynthesis.speak(u);
     });
-    function askQuestions(){
-      let qi = 0, correct = 0;
+    function askQuestions(rQi, rCorrect){
+      let qi = rQi || 0, correct = rCorrect || 0;
       function q(){
         if(qi>=L.qs.length){
           correctTotal += correct; qTotal += L.qs.length;
@@ -841,7 +899,9 @@ function runListening(){
         $('#runner-body').querySelectorAll('.opt-btn').forEach(b=>{
           b.addEventListener('click', ()=>{
             if(+b.dataset.i === cur.a) correct++;
-            qi++; q();
+            qi++;
+            ipSet('listening', { idx, phase:'q', qi, correct, correctTotal, qTotal });
+            q();
           });
         });
       }
@@ -849,6 +909,7 @@ function runListening(){
     }
   }
   function finish(){
+    ipClear('listening');
     setCount('');
     const lv = correctTotal>=7?'B2': correctTotal>=5?'B1': correctTotal>=3?'A2+':'A2';
     S.results.listening = { correct:correctTotal, total:qTotal, cefr:lv, date:today() };
@@ -905,6 +966,23 @@ function runSpeaking(){
       <textarea class="ztextarea" id="spk-transcript" placeholder="貼 Task A 自我介紹嘅文字稿（Task B 有心機都得）…"></textarea>
     </div>`);
   actions(`<button class="btn-primary" id="spk-save">✅ 儲存口語自評</button>`);
+  // 斷點續測：恢復上次自評＋文字稿
+  const spkRS = ipGet('speaking');
+  if(spkRS){
+    (spkRS.checks||[]).forEach((c,n)=>{ const el = $('#spk-c'+(n+1)); if(el) el.checked = !!c; });
+    if(spkRS.level) $('#spk-level').value = spkRS.level;
+    if(spkRS.transcript) $('#spk-transcript').value = spkRS.transcript;
+  }
+  function spkAutosave(){
+    ipSet('speaking', {
+      checks: [1,2,3,4,5].map(n=>$('#spk-c'+n).checked),
+      level: $('#spk-level').value,
+      transcript: $('#spk-transcript').value
+    });
+  }
+  [1,2,3,4,5].forEach(n=>$('#spk-c'+n).addEventListener('change', spkAutosave));
+  $('#spk-level').addEventListener('change', spkAutosave);
+  $('#spk-transcript').addEventListener('input', spkAutosave);
   let tid = null;
   $('#spk-timer').addEventListener('click', ()=>{
     const clock = $('#spk-clock');
@@ -922,6 +1000,7 @@ function runSpeaking(){
     const score = checks.filter(Boolean).length;
     const lv = $('#spk-level').value || (score>=4?'B1':score>=2?'A2+':'A2');
     S.results.speaking = { score, total:5, checks, selfLevel:lv, cefr:lv, transcript:$('#spk-transcript').value.trim(), date:today(), confirmed:false };
+    ipClear('speaking');
     save();
     body(`<div class="score-hero">
         <div class="big">${score} <span style="font-size:16px; font-weight:400; color:var(--text-muted);">/ 5</span></div>
@@ -953,25 +1032,58 @@ function runWriting(){
     <button class="btn-primary" id="wr-save">✅ 儲存＋交 ZCode 批改</button>
     <button class="btn-secondary" id="wr-copy">📋 複製全文（貼去 ZCode 對話）</button>`);
   const ta = $('#wr-text');
+  // 斷點續測：恢復草稿＋剩餘時間
+  const wrRS = ipGet('writing') || {};
+  let remaining = (typeof wrRS.remaining === 'number') ? wrRS.remaining : WRITING_TASK.minutes*60;
+  let wrLocked = !!wrRS.locked;
+  let wrRunning = !!wrRS.running;
+  function wrClockText(){
+    const m = Math.floor(Math.max(remaining,0)/60), s = Math.max(remaining,0)%60;
+    return m + ':' + String(s).padStart(2,'0');
+  }
+  function wrSync(){
+    $('#wr-count').textContent = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+    ipSet('writing', { text: ta.value, remaining: Math.max(remaining,0), running: wrRunning, locked: wrLocked });
+  }
+  if(wrRS.text){ ta.value = wrRS.text; $('#wr-count').textContent = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0; }
+  const wrClock = $('#wr-clock');
+  if(wrLocked || wrRunning){ wrClock.style.display='block'; wrClock.textContent = wrLocked ? '⏹️ 時間到——已鎖定' : wrClockText(); }
+  let tid = null;
+  function applyLocked(){
+    wrLocked = true; wrRunning = false; ta.disabled = true;
+    wrClock.textContent = '⏹️ 時間到——已鎖定';
+    $('#wr-start').textContent = '✅ 已收卷';
+    $('#wr-start').disabled = true;
+    wrSync();
+  }
+  if(wrLocked){
+    applyLocked();
+  } else if(wrRunning){
+    // 返嚟續測：計時由剩餘時間繼續
+    ta.disabled = false;
+    $('#wr-start').disabled = true; $('#wr-start').textContent='⏳ 計時中（已由上次剩餘時間繼續）';
+    tid = setInterval(()=>{
+      remaining--;
+      wrClock.textContent = wrClockText();
+      if(remaining % 5 === 0) wrSync(); // 每 5 秒存一次，唔使每秒寫 localStorage
+      if(remaining<=0){ clearInterval(tid); applyLocked(); }
+    },1000);
+  }
   ta.addEventListener('input', ()=>{
     $('#wr-count').textContent = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
+    wrSync();
   });
-  let tid = null, locked = false;
   $('#wr-start').addEventListener('click', ()=>{
     ta.disabled = false; ta.focus();
-    let total = WRITING_TASK.minutes*60;
-    const clock = $('#wr-clock'); clock.style.display='block';
+    wrRunning = true;
     $('#wr-start').disabled = true; $('#wr-start').textContent='⏳ 計時中…';
     tid = setInterval(()=>{
-      total--;
-      const m = Math.floor(total/60), s = total%60;
-      clock.textContent = m + ':' + String(s).padStart(2,'0');
-      if(total<=0){
-        clearInterval(tid); locked = true; ta.disabled = true;
-        clock.textContent = '⏹️ 時間到——已鎖定';
-        $('#wr-start').textContent = '✅ 已收卷';
-      }
+      remaining--;
+      wrClock.textContent = wrClockText();
+      if(remaining % 5 === 0) wrSync();
+      if(remaining<=0){ clearInterval(tid); applyLocked(); }
     },1000);
+    wrSync();
   });
   $('#wr-copy').addEventListener('click', ()=>{
     navigator.clipboard.writeText(ta.value).then(()=>{
@@ -983,6 +1095,7 @@ function runWriting(){
     const wc = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
     if(wc < 20){ alert('全文太短——認真寫夠 80-120 字先好儲存。'); return; }
     S.results.writing = { words:wc, text:ta.value, cefr:'待批改', date:today() };
+    ipClear('writing');
     save();
     body(`<div class="score-hero">
         <div class="big">${wc}<span style="font-size:16px; font-weight:400; color:var(--text-muted);"> words</span></div>
@@ -1023,19 +1136,35 @@ function renderTests(){
   const el = $('#test-list');
   el.innerHTML = PARTS.map(p=>{
     const r = S.results[p.id];
+    const ip = ipGet(p.id);
     const line = partScoreLine(p.id);
+    const statusTag = ip
+      ? `<span class="tag tag-yellow">⏸️ 進行中</span>`
+      : (r ? `<span class="tag tag-green">已完成</span>` : `<span class="tag tag-gray">未測</span>`);
+    const cta = ip
+      ? `▶️ 繼續上次（${ipDesc(p.id)}）`
+      : (r ? '重新測（會覆蓋舊成績）' : '開始測試 →');
     return `<div class="test-row" role="button" tabindex="0" data-id="${p.id}">
       <div class="row-top">
         <span style="font-size:18px;">${p.emoji}</span>
         <span class="row-name">${p.name}</span>
-        ${r ? `<span class="tag tag-green">已完成</span>` : `<span class="tag tag-gray">未測</span>`}
+        ${statusTag}
       </div>
       <div class="row-meta">${p.meta}</div>
       <div class="row-meta" style="color:var(--text);">${p.desc}</div>
       ${line ? `<div class="row-score" style="color:var(--pale-green-text);">${line}</div>` : ''}
-      <div class="row-score" style="color:var(--pale-blue-text); font-weight:600;">${r?'重新測（會覆蓋舊成績）':'開始測試 →'}</div>
+      <div class="row-score" style="color:var(--pale-blue-text); font-weight:600;">${cta}</div>
+      ${ip ? `<button class="ip-reset" data-id="${p.id}">放棄進度 · 重新開始</button>` : ''}
     </div>`;
   }).join('');
+  el.querySelectorAll('.ip-reset').forEach(b=>{
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(confirm('確定放棄呢部分嘅進度？上次嘅作答會刪除，由頭開始。')){
+        ipClear(b.dataset.id);
+      }
+    });
+  });
   el.querySelectorAll('.test-row').forEach(b=>{
     b.addEventListener('click', ()=>openRunner(b.dataset.id));
     b.addEventListener('keydown', e=>{
@@ -1045,7 +1174,8 @@ function renderTests(){
 }
 function renderHeader(){
   const done = PARTS.filter(p=>S.results[p.id]).length;
-  $('#hdr-progress-num').textContent = `${done} / 6`;
+  const ipN = PARTS.filter(p=>ipGet(p.id)).length;
+  $('#hdr-progress-num').textContent = ipN ? `${done} / 6 · ⏸️ ${ipN}` : `${done} / 6`;
   $('#hdr-progress-fill').style.width = (done/6*100)+'%';
 }
 function renderReport(){
