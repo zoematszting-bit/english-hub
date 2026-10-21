@@ -131,10 +131,14 @@
   /* fullscreen test runner */
   #runner {
     position: fixed; inset: 0; background: var(--bg); z-index: 60;
-    overflow-y: auto; display: none; padding-bottom: 120px;
+    overflow-y: auto; display: none; padding-bottom: 0;
     padding-top: max(16px, env(safe-area-inset-top));
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
   #runner.open { display: block; }
+  /* iOS tap hardening: kill 300ms delay + double-tap zoom on every control */
+  button, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .runner-head {
     position: sticky; top: 0; background: rgba(251,251,250,0.95); backdrop-filter: blur(8px);
     padding: 12px 16px; border-bottom: 1px solid var(--border); z-index: 5;
@@ -158,7 +162,17 @@
     font-family: inherit; font-size: 15px; color: var(--text); cursor: pointer;
   }
   .opt-btn:active { background: var(--surface-2); }
-  .runner-actions { padding: 10px 16px 24px; }
+  /* sticky bottom action bar — 按鈕永遠喺拇指位，唔使捲到文章尾先搵到 */
+  .runner-actions {
+    position: sticky; bottom: 0;
+    background: rgba(251,251,250,0.96); backdrop-filter: blur(8px);
+    padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+  }
+  .runner-actions:empty { display: none; border-top: none; }
+  .runner-actions .btn-primary:last-child,
+  .runner-actions .btn-secondary:last-child,
+  .runner-actions .btn-play:last-child { margin-bottom: 0; }
   .btn-primary {
     display: block; width: 100%; background: var(--accent); color: #fff;
     border: none; border-radius: 10px; padding: 13px; font-family: inherit;
@@ -353,7 +367,7 @@
   </section>
 
   <footer class="site-foot">
-    🩺 英文體檢站 v1.1 · 2026-10-15<br>
+    🩺 英文體檢站 v1.3 · 2026-10-15<br>
     ZCode × Zoe · 先量化，後訓練
   </footer>
 </div>
@@ -570,6 +584,7 @@ function openRunner(partId){
   $('#runner').classList.add('open');
   document.body.style.overflow='hidden';
   $('#runner-title').textContent = p.emoji + ' ' + p.name;
+  actions(''); // 總閘：清走上一個測試殘留嘅掣（例如完成掣），防止誤撳
   if(partId==='vocab') runMCQ('vocab');
   else if(partId==='grammar') runMCQ('grammar');
   else if(partId==='reading') runReading();
@@ -586,7 +601,12 @@ function closeRunner(){
 }
 $('#runner-close').addEventListener('click', ()=>{ closeRunner(); });
 function setCount(t){ $('#runner-count').textContent = t; }
-function body(html){ $('#runner-body').innerHTML = html; }
+function body(html){
+  $('#runner-body').innerHTML = html;
+  // 每次內容切換都返去頂——題目出喺頂部，唔可以停留喺舊捲動位置
+  const r = $('#runner');
+  if(r) r.scrollTop = 0;
+}
 function actions(html){ $('#runner-actions').innerHTML = html; }
 
 /* ---------- MCQ runner (vocab / grammar) ---------- */
@@ -691,9 +711,11 @@ function runReading(){
     $('#r-done').addEventListener('click', ()=>{
       const mins = (Date.now()-t0)/60000;
       answer(mins);
-    });
+    }, { once: true });
   }
   function answer(mins){
+    // 即刻清走「我睇完了」掣——否則舊掣留喺底部，再撳會靜靜重頭開始答題
+    actions('');
     const p = READING[idx];
     let qi = 0, correct = 0;
     function q(){
